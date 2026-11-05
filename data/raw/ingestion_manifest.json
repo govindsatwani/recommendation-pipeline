@@ -1,0 +1,47 @@
+{
+  "dataset": "Amazon Reviews 2018 - Software (5-core)",
+  "files": {
+    "users.csv": {
+      "rows": 1826,
+      "columns": [
+        "user_id",
+        "user_name"
+      ],
+      "sha256": "1f146312744f31e527f05dae37aac3c282d45c4f4fa78ef14c921f39e39a07a2"
+    },
+    "items.csv": {
+      "rows": 26790,
+      "columns": [
+        "item_id",
+        "title",
+        "brand",
+        "main_category",
+        "categories",
+        "price",
+        "description"
+      ],
+      "sha256": "62f617829e75989b2e893fb262e8658bb333f83f4c4a30f373c8c5bc8f5fbc1f"
+    },
+    "interactions.csv": {
+      "rows": 12805,
+      "columns": [
+        "user_id",
+        "item_id",
+        "rating",
+        "timestamp",
+        "verified",
+        "vote",
+        "summary"
+      ],
+      "sha256": "346adbb13acd5e18fd8b9924af73f1863af563a2553a0b6aa720ba26fe90fbe8"
+    },
+    "Software_5.json.gz": {
+      "sha256": "1495184a2d3a166516b1fbc5be57c5dbcc9fd44eb6be3df72a67aeb5546cd9ed",
+      "bytes": 5335448
+    },
+    "meta_Software.json.gz": {
+      "sha256": "5855d757635170c7e456da56efecb9aea2210ca399ab8cbe0d50d98f98a954d0",
+      "bytes": 15236627
+    }
+  }
+}

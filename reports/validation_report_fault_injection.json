@@ -1,0 +1,49 @@
+{
+  "tables": {
+    "users": {
+      "rows_in": 1829,
+      "rows_valid": 1826,
+      "rows_rejected": 3,
+      "rejected_by_rule": {
+        "duplicate_row": 3
+      }
+    },
+    "items": {
+      "rows_in": 26790,
+      "rows_valid": 21636,
+      "rows_rejected": 5154,
+      "rejected_by_rule": {
+        "duplicate_row": 5151,
+        "item_id:missing_value": 3
+      }
+    },
+    "interactions": {
+      "rows_in": 12813,
+      "rows_valid": 11941,
+      "rows_rejected": 872,
+      "rejected_by_rule": {
+        "duplicate_row": 823,
+        "rating:rating_in_range": 10,
+        "timestamp:timestamp_in_range": 10,
+        "referential_integrity:item_id_not_in_items": 6,
+        "referential_integrity:user_id_not_in_users": 6,
+        "rating:missing_value": 5,
+        "rating:dtype_numeric": 5,
+        "user_id:missing_value": 4,
+        "timestamp:dtype_integer": 3
+      }
+    }
+  },
+  "warnings": {
+    "interactions.repeated_user_item_pairs": 163,
+    "items.missing_title": 6,
+    "items.missing_brand": 659,
+    "items.missing_categories": 2063,
+    "items.missing_price": 20182,
+    "items.unparseable_price": 1290,
+    "items.missing_description": 3597,
+    "users.missing_user_name": 1
+  },
+  "source": "data/raw/faulty",
+  "error_dir": "data/errors/faulty_demo"
+}
