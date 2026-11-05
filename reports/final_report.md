@@ -38,9 +38,9 @@ Course: Data Management for Machine Learning (Assignment 2)
 ## 3. Data Ingestion
 
 * The ingestion stage loads the raw data files and converts them into structured tables:
-- users
-- items
-- interactions
+1. users
+2. items
+3. interactions
 
 * The project uses the public Amazon Software dataset and stores the raw files under `data/raw/`. 
 * An ingestion manifest is also generated in `data/raw/ingestion_manifest.json`, which records file-level and table-level metadata including row counts, columns, file sizes, and SHA-256 hashes.
@@ -51,12 +51,12 @@ Course: Data Management for Machine Learning (Assignment 2)
 * The validation stage is a central part of the pipeline. It includes schema and other checks ensure the data is valid before it is used for modeling.
 
 * The validation layer checks:
-- missing values
-- duplicate rows
-- incorrect data types
-- out-of-range ratings
-- invalid timestamps
-- referential integrity between interactions, users, and items
+1. missing values
+2. duplicate rows
+3. incorrect data types
+4. out-of-range ratings
+5. invalid timestamps
+6. referential integrity between interactions, users, and items
 
 * Rejected rows are written into `data/errors/` and logged with explicit reasons, while valid records are retained in processed Parquet tables. 
 * A validation report is also generated for each execution.
@@ -65,38 +65,38 @@ Course: Data Management for Machine Learning (Assignment 2)
 ## 5. Data Preparation and Transformation
 
 * Once the data passes validation, the preparation stage cleans and standardizes the records. This includes:
-- handling missing values
-- correcting price-related issues
-- standardizing text values
-- removing duplicate user-item interactions and keeping the latest valid interaction
-- creating train/test splits based on time
+1. handling missing values
+2. correcting price-related issues
+3. standardizing text values
+4. removing duplicate user-item interactions and keeping the latest valid interaction
+5. creating train/test splits based on time
 
 * The data is split chronologically (time-based) rather than randomly to avoid look-ahead leakage. 
 * This is important in recommendation systems because a random split can allow future interactions to leak into model training.
 * A time-based split also better simulates real deployment conditions, where the system recommends items to users based on past behavior and evaluates future interactions.
 
 * The transformation stage then converts the prepared data into useful summary structures:
-- user activity summaries
-- item popularity summaries
-- sparse user-item interaction matrix
-- index mappings for users and items
+1. user activity summaries
+2. item popularity summaries
+3. sparse user-item interaction matrix
+4. index mappings for users and items
 
 ## 6. Feature Management
 
 * A key part of the project is the custom feature layer. Features are organized into:
-- user features
-- item features
-- interaction features
+1. user features
+2. item features
+3. interaction features
 
 * Examples include:
-- user average rating
-- user activity count
-- user recency
-- item popularity
-- item average rating
-- item price
-- category/brand signals
-- interaction-level compatibility between user preferences and item attributes
+1. user average rating
+2. user activity count
+3. user recency
+4. item popularity
+5. item average rating
+6. item price
+7. category/brand signals
+8. interaction-level compatibility between user preferences and item attributes
 
 * The feature layer is reusable and is intended to support both training-time and serving-time use cases.
 * The feature layer is important because it makes the pipeline more maintainable and prevents feature logic from being duplicated or drifted across modules.
@@ -115,12 +115,12 @@ Two recommendation models have been trained and compared:
 
 * The models are trained with deterministic settings and their runs are logged using MLflow. This allows experiment tracking for parameters, metrics, run metadata, and model artifacts. 
 * The project logs:
-- model name
-- hyperparameters
-- training time
-- data provenance
-- evaluation metrics
-- artifacts
+1. model name
+2. hyperparameters
+3. training time
+4. data provenance
+5. evaluation metrics
+6.  artifacts
 
 This makes the project reproducible and easier to compare across model versions.
 
@@ -129,15 +129,15 @@ This makes the project reproducible and easier to compare across model versions.
 * The evaluation stage compares both models using ranking metrics and rating metrics.
 
 Ranking metrics:
-- Precision@10
-- Recall@10
-- NDCG@10
-- Coverage
-- Diversity
+1. Precision@10
+2. Recall@10
+3. NDCG@10
+4. Coverage
+5. Diversity
 
 Rating metrics:
-- RMSE
-- MAE
+1. RMSE
+2. MAE
 
 * The evaluation is performed on a time-based holdout set and uses relevant interactions defined as ratings greater than or equal to 4. 
 * Items already seen in training are excluded from the evaluation list to avoid trivial memorization.
@@ -147,34 +147,34 @@ Rating metrics:
 ## 9. Orchestration and Reproducibility
 
 * The end-to-end workflow is orchestrated using Prefect. The flow runs the full pipeline in dependency order and produces a clean execution trail. The orchestration layer ensures that:
-- all stages execute in sequence
-- failures are visible
-- logs are captured
-- runs are reproducible
-- the workflow can be scheduled
+1. all stages execute in sequence
+2. failures are visible
+3. logs are captured
+4. runs are reproducible
+5. the workflow can be scheduled
 
 * The pipeline is fully reproducible with a single command:
-- create a virtual environment
-- install dependencies
-- run the Prefect workflow
+1. create a virtual environment
+2. install dependencies
+3. run the Prefect workflow
 
 ## 10. Serving and Recommendation use
 
 * The project also includes a recommendation service that can generate suggestions for:
-- a known user
-- a new user with a few given reviews
-- an unknown user with no prior history
+1. a known user
+2. a new user with a few given reviews
+3. an unknown user with no prior history
 
 * The service can recommend items based on either learned user preferences or a popularity fallback when no history exists.
 
 ## 11. Limitations
 
-* This project demonstrates a complete recommendation-system pipeline that covers the full lifecycle from raw data ingestion to trained model and evaluation. However, there are also limitations:
-- the evaluation is offline rather than online
-- the dataset is sparse
-- some cold-start and cold-item challenges remain
-- only a baseline and one personalized model were trained
-- no large-scale hyperparameter tuning was performed
+* The current version of the code has the following limitations:
+1. the evaluation is offline rather than online
+2. the dataset is sparse
+3. some cold-start and cold-item challenges remain
+4. only a baseline and one personalized model were trained
+5. no large-scale hyperparameter tuning was performed
 
 ## 12. Conclusion
 
