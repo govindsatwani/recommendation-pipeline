@@ -5,14 +5,12 @@ import pandas as pd
 
 from src.inference.recommend import DEFAULT_MODEL, MODELS, RecommendationService
 
-
 def parse_history(text: str) -> dict[str, float]:
     out = {}
     for part in text.split(","):
         item, rating = part.split(":")
         out[item.strip()] = float(rating)
     return out
-
 
 def main() -> None:
     p = argparse.ArgumentParser(description="Top-K item recommendations for a user")
@@ -32,7 +30,6 @@ def main() -> None:
     recs = svc.recommend(a.user_id, a.k, parse_history(a.history) if a.history else None)
     print(f"\nTop-{a.k} recommendations - source: {recs.attrs['source']}\n")
     print(recs.to_string(index=False))
-
 
 if __name__ == "__main__":
     main()
