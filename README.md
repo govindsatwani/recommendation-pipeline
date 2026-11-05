@@ -94,12 +94,14 @@ Choose the model with `--model {popularity,svd}` (default model is `svd`).
 ## Project layout
 
 ```
-configs/config.yaml     all parameters used throughout the process
-dags/recsys_flow.py     Complete Prefect flow
-src/                    ingestion, validation, preparation, transformation, features, training, evaluation, inference
+configs/config.yaml - all parameters used throughout the process
+dags/recsys_flow.py - Complete Prefect flow
+src/ - ingestion, validation, preparation, transformation, features, training, evaluation, inference
 data/{raw,processed,features,errors}
-models/  reports/  logs/  docs/
-predict.py              CLI recommender
+models/
+reports/
+docs/
+predict.py - CLI recommender
 ```
 
 ## Notes and limitations
