@@ -1,0 +1,12 @@
+pandas==3.1.0
+numpy==2.5.4
+scipy==1.18.1
+scikit-learn==1.9.1
+joblib==1.6.0
+pandera==0.35.0
+pyarrow==26.0.1
+PyYAML==6.0.3
+requests==2.34.2
+mlflow==3.18.0
+prefect==3.9.1
+matplotlib==3.11.2
