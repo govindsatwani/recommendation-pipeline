@@ -23,8 +23,8 @@ The entire pipeline is orchestrated end to end with Prefect.
 | Serving | `src/inference/`, `predict.py` | `reports/sample_recommendations.md` |
 
 Models: **popularity baseline** and **SVD matrix factorisation** (personalised). 
-1. The full write-up can be found in [`reports/final_report.md`](reports/final_report.md).
-2. The feature documentation can be found in [`reports/feature_catalog.md`](reports/feature_catalog.md).
+1. The full write-up can be found in [reports/final_report.md](reports/final_report.md).
+2. The feature documentation can be found in [reports/feature_catalog.md](reports/feature_catalog.md).
 
 ## Setup
 
@@ -126,4 +126,4 @@ predict.py - CLI recommender
 * `data/raw/items.csv`, `data/processed/`, `data/features/*.parquet`, `models/*.joblib`, `mlflow.db`/`mlartifacts/` and `logs/` are git-ignored and rebuilt by the pipeline.
 * The downloaded `.gz` files, `data/raw/items.zip` (zipped because the CSV is 41 MB), `models/runs/*.json`, `data/errors/`, `reports/` and `docs/screenshots/` are committed as evidence of my own run. A rerun overwrites them.
 * The small raw CSVs, the error datasets (`data/errors/`) and all generated reports (`reports/`) are committed for visibility in the operation of the pipeline.
-* Screenshots for all the tools and executed steps of the pipeline can be found ![here](docs/screenshots).
+* Screenshots for all the tools and executed steps of the pipeline can be found [here](docs/screenshots).
