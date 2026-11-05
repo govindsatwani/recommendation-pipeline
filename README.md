@@ -19,7 +19,7 @@ The entire pipeline is orchestrated end to end with Prefect.
 | 5. Feature management | `src/features/` | `data/features/*.parquet`, `reports/feature_catalog.md` |
 | 6. Training | `src/training/` | `models/*.joblib`, MLflow runs |
 | 7. Evaluation | `src/evaluation/` | `reports/model_comparison.md`, `reports/model_comparison.csv`, `reports/model_comparison.json` |
-| 8. Orchestration | `dags/recsys_flow.py`) | task run states in the console / Prefect UI, `logs/pipeline.log` |
+| 8. Orchestration | `dags/recsys_flow.py` | task run states in the console / Prefect UI, `logs/pipeline.log` |
 | Serving | `src/inference/`, `predict.py` | `reports/sample_recommendations.md` |
 
 Models: **popularity baseline** and **SVD matrix factorisation** (personalised). 
@@ -75,14 +75,27 @@ Individual stages of the pipeline can also be run on their own:
 .venv/bin/python -m src.evaluation.evaluate
 .venv/bin/python -m src.inference.demo
 ```
+## Starting from a clean state (optional)
+
+Not required, because every stage overwrites its outputs. 
+This can be used to reproduce the run from scratch, including the dataset download. Howver, the MLflow and Prefect servers need to be stopped first.
+The below commands can be run to clean up the files from the previous runs.
+
+```bash
+rm -f data/raw/*.gz data/raw/items.zip data/raw/*.csv data/raw/ingestion_manifest.json
+rm -rf data/raw/faulty data/errors data/processed/* data/features/*.parquet data/features/feature_metadata.json
+rm -rf models/*.joblib models/runs mlflow.db mlartifacts logs
+find reports -type f ! -name final_report.md -delete
+```
+Then run `.venv/bin/python dags/recsys_flow.py` as above.
 
 ## Get recommendations for a user
 
 ```bash
-# existing user (uses the reviews seen in training)
+# existing user -> uses the reviews seen in training)
 .venv/bin/python predict.py --user_id A2THQCHKR89E16 --k 10 --show-history
 
-# brand-new user: pass their reviews as item_id:rating (fold-in, no retraining)
+# brand-new user: pass their reviews as item_id:rating -> fold-in, no retraining
 .venv/bin/python predict.py --history "B00004TYCR:5,B00003JAU7:4" --k 5
 
 # unknown user without reviews -> popularity fallback
@@ -95,6 +108,7 @@ Choose the model with `--model {popularity,svd}` (default model is `svd`).
 
 ```
 configs/config.yaml - all parameters used throughout the process
+docs/screenshots/ - screenshots for all the tools and steps of the pipeline
 dags/recsys_flow.py - Complete Prefect flow
 src/ - ingestion, validation, preparation, transformation, features, training, evaluation, inference
 data/{raw,processed,features,errors}
@@ -109,5 +123,7 @@ predict.py - CLI recommender
 * Evaluation is offline (time-based 80/20 split, K=10, relevant = rating >= 4). No live A/B test is being done.
 * The dataset is small and sparse (density ~0.8%); about half of the test interactions involve items that were never seen in training and cannot be recommended by collaborative models.
 * The user table only holds an id and name; whereas the user attributes are derived from interaction history.
-* Large or regenerated artefacts are git-ignored and rebuilt by the pipeline: `data/raw/items.csv` and the downloaded `.gz` files, `data/processed/`, `data/features/`, `models/*.joblib`, `mlflow.db`/`mlartifacts/` and `logs/`.
+* `data/raw/items.csv`, `data/processed/`, `data/features/*.parquet`, `models/*.joblib`, `mlflow.db`/`mlartifacts/` and `logs/` are git-ignored and rebuilt by the pipeline.
+* The downloaded `.gz` files, `data/raw/items.zip` (zipped because the CSV is 41 MB), `models/runs/*.json`, `data/errors/`, `reports/` and `docs/screenshots/` are committed as evidence of my own run. A rerun overwrites them.
 * The small raw CSVs, the error datasets (`data/errors/`) and all generated reports (`reports/`) are committed for visibility in the operation of the pipeline.
+* Screenshots for all the tools and executed steps of the pipeline can be found ![here](docs/screenshots).
