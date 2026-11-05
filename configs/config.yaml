@@ -1,0 +1,44 @@
+project:
+  name: recommendation-pipeline
+  seed: 42
+
+paths:
+  raw: data/raw
+  validated: data/processed/validated
+  processed: data/processed
+  features: data/features
+  errors: data/errors
+  models: models
+  reports: reports
+  logs: logs
+
+dataset:
+  name: Amazon Reviews 2018 - Software (5-core)
+  reviews_url: https://mcauleylab.ucsd.edu/public_datasets/data/amazon_v2/categoryFilesSmall/Software_5.json.gz
+  meta_url: https://mcauleylab.ucsd.edu/public_datasets/data/amazon_v2/metaFiles2/meta_Software.json.gz
+  reviews_file: Software_5.json.gz
+  meta_file: meta_Software.json.gz
+
+validation:
+  rating_min: 1
+  rating_max: 5
+  timestamp_min: "1996-01-01" # Reviews in this dataset start from 1996
+  timestamp_max: now
+
+split:
+  test_fraction: 0.2 # time-based split -> newest 'test_fraction' of interactions will become the test set
+
+evaluation:
+  k: 10
+  relevance_threshold: 4
+
+models:
+  svd:
+    n_factors: 40 # latent factors of the ranking SVD - these are fixed and not tuned
+    rating_factors: 20 # latent factors of the rating-prediction head
+  popularity:
+    prior_strength: 5 # using shrinkage when predicting ratings from item means
+
+mlflow:
+  tracking_uri: sqlite:///mlflow.db
+  experiment: software-recommender

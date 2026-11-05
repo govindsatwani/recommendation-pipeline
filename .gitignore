@@ -1,0 +1,12 @@
+.venv/
+__pycache__/
+*.pyc
+.prefect/
+
+# large / regenerated artefacts (rebuilt by `python dags/recsys_flow.py`)
+data/processed/*
+!data/processed/.gitkeep
+models/*.joblib
+mlflow.db
+mlartifacts/
+mlruns/
