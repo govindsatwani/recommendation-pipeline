@@ -38,6 +38,19 @@ Models: **popularity baseline** and **SVD matrix factorisation** (personalised).
 python3 -m venv .venv
 .venv/bin/pip install -r requirements.txt
 ```
+## Starting from a clean state (optional)
+
+Not required, because every stage overwrites its outputs. 
+This can be used to reproduce the run from scratch, including the dataset download. Howver, the MLflow and Prefect servers need to be stopped first.
+The below commands can be run to clean up the files from the previous runs.
+
+```bash
+rm -f data/raw/*.gz data/raw/items.zip data/raw/*.csv data/raw/ingestion_manifest.json
+rm -rf data/raw/faulty data/errors data/processed/* data/features/*.parquet data/features/feature_metadata.json
+rm -rf models/*.joblib models/runs mlflow.db mlartifacts logs
+find reports -type f ! -name final_report.md -delete
+```
+Then run `.venv/bin/python dags/recsys_flow.py` as follows.
 
 ## Single command to run the whole pipeline
 
@@ -75,19 +88,6 @@ Individual stages of the pipeline can also be run on their own:
 .venv/bin/python -m src.evaluation.evaluate
 .venv/bin/python -m src.inference.demo
 ```
-## Starting from a clean state (optional)
-
-Not required, because every stage overwrites its outputs. 
-This can be used to reproduce the run from scratch, including the dataset download. Howver, the MLflow and Prefect servers need to be stopped first.
-The below commands can be run to clean up the files from the previous runs.
-
-```bash
-rm -f data/raw/*.gz data/raw/items.zip data/raw/*.csv data/raw/ingestion_manifest.json
-rm -rf data/raw/faulty data/errors data/processed/* data/features/*.parquet data/features/feature_metadata.json
-rm -rf models/*.joblib models/runs mlflow.db mlartifacts logs
-find reports -type f ! -name final_report.md -delete
-```
-Then run `.venv/bin/python dags/recsys_flow.py` as above.
 
 ## Get recommendations for a user
 
