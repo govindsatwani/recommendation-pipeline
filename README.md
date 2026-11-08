@@ -106,16 +106,24 @@ Choose the model with `--model {popularity,svd}` (default model is `svd`).
 
 ## Project layout
 
-```
-configs/config.yaml - all parameters used throughout the process
-docs/screenshots/ - screenshots for all the tools and steps of the pipeline
-dags/recsys_flow.py - Complete Prefect flow
-src/ - ingestion, validation, preparation, transformation, features, training, evaluation, inference
-data/{raw,processed,features,errors}
-models/
-reports/
-docs/
-predict.py - CLI recommender
+```text
+.
+├── configs/
+│   └── config.yaml            # All parameters used throughout the process
+├── dags/
+│   └── recsys_flow.py        # Complete Prefect flow
+├── data/
+│   ├── raw/
+│   ├── processed/
+│   ├── features/
+│   └── errors/
+├── docs/
+│   └── screenshots/          # Screenshots for all the tools and steps
+├── models/
+├── reports/
+├── src/                      # Ingestion, validation, preparation, transformation, features, training, evaluation, inference
+└── predict.py                # CLI recommender
+
 ```
 
 ## Notes and limitations
