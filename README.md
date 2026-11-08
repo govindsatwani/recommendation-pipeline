@@ -118,35 +118,35 @@ Choose the model with `--model {popularity,svd}` (default model is `svd`).
 │   ├── features/
 │   └── errors/
 ├── docs/
-│   └── screenshots/ # Screenshots for all the tools and steps
+│   ├── screenshots/ # Screenshots for all the tools and steps
     └── architecture.png
 ├── models/
     └── runs/
 ├── reports/
-    └── feature_catalog.md
-    └── final_report.md
-    └── model_comparison.csv
-    └── model_comparison.json
-    └── model_comparison.md
-    └── sample_recommendations.md
-    └── validate_report_fault_injcetion.json
-    └── validate_report_fault_injcetion.md
-    └── validate_report.json
+    ├── feature_catalog.md
+    ├── final_report.md
+    ├── model_comparison.csv
+    ├── model_comparison.json
+    ├── model_comparison.md
+    ├── sample_recommendations.md
+    ├── validate_report_fault_injcetion.json
+    ├── validate_report_fault_injcetion.md
+    ├── validate_report.json
     └── validate_report.md
 ├── src/
-    └── evaluation/
-    └── features/
-    └── inference/
-    └── ingestion/
-    └── preparation/
-    └── training/
-    └── transformation/
-    └── validation/
-    └── __init__.py
+    ├── evaluation/
+    ├── features/
+    ├── inference/
+    ├── ingestion/
+    ├── preparation/
+    ├── training/
+    ├── transformation/
+    ├── validation/
+    ├── __init__.py
     └── common.py # Ingestion, validation, preparation, transformation, features, training, evaluation, inference
-└── .gitignore
-└── predict.py # CLI recommender
-└── README.md
+├── .gitignore
+├── predict.py # CLI recommender
+├── README.md
 └── requirements.txt
 
 ```
