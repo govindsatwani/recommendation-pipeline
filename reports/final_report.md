@@ -1,170 +1,94 @@
-# Final Report - End-to-End Data Management Pipeline for a Recommendation System
+# Final Report: End-to-End Data Management Pipeline for a Recommendation System
 
-GitHub repository: https://github.com/govindsatwani/recommendation-pipeline
+**Name:** Govind Satwani  
+**Roll number:** 2025AG05056  
+**Course:** Data Management for Machine Learning   
+**GitHub repository:** https://github.com/govindsatwani/recommendation-pipeline
 
-Name: Govind Satwani  
-Roll No.: 2025AG05056  
-Course: Data Management for Machine Learning
+## 1. Objective and Dataset
 
-## 1. Problem Statement
+The objective of this project was to build a modular, reproducible data management pipeline for a recommendation system.  
+The pipeline covers data ingestion, validation, preparation, transformation, feature management, model training, evaluation, and orchestration.  
+The project uses the public **Amazon Reviews 2018 — Software (5-core)** dataset and its associated product metadata from the McAuley Lab.  
+The reviews provide user-item interactions and ratings, while the metadata provides item attributes.  
+The pipeline derives three tables: users, items, and interactions.
 
-The goal of this assignment was to design and implement an end-to-end data management pipeline for a recommendation system.  
-The aim was to build a complete and orchestrated pipeline that covers all required stages: data ingestion, validation, preparation, transformation, feature management, model training, evaluation, and orchestration.  
-For the project, I have used the Amazon Reviews 2018 - Software (5-core) dataset from the McAuley Lab, which contains product reviews and metadata for software-related products.  
-I selected this dataset because it contains user-item interactions, item attributes, and review text that can be transformed into useful features for ranking and personalization.   
-The goal was to recommend relevant products to users based on their past review behavior and item metadata, and at the same time ensuring the data pipeline remains robust, clean, and reproducible.
+## 2. Architecture and Tools
 
-## 2. Pipeline Architecture and Workflow
+The workflow is:  
+`Ingestion → Validation → Preparation → Transformation → Feature Management → Training → Evaluation → Recommendation Generation`  
 
-The pipeline has the following stages:
-1. Ingestion
-2. Validation
-3. Preparation
-4. Transformation
-5. Feature management
-6. Model training
-7. Model evaluation
-8. Recommendation generation
+The pipeline is implemented in Python and orchestrated using **Prefect**.  
+It uses Pandas for data processing, Pandera for validation, Parquet and CSV for data storage, scikit-learn for truncated SVD, and MLflow for experiment tracking.  
+Separate modules are used for each stage to make the workflow easier to inspect and maintain.
 
-The pipeline is orchestrated with the help of Prefect. The complete orchestration is handled in `dags/recsys_flow.py`.  
-This script provides the complete end-to-end execution path and ensures that each stage runs in the correct dependency order.  
-To make the pipeline robust and modularised separate modules for each stage of the pipeline have been created, making maintenance and troubleshooting easier.  
-The system trains two models:
-1. A non-personalized popularity baseline
-2. A personalized SVD-based recommender
+![Recommendation pipeline architecture](../docs/architecture.png)
 
-## 3. Data Ingestion
+## 3. Data Ingestion and Validation
 
-The ingestion stage loads the raw data files and converts them into 3 tables:
-1. users
-2. items
-3. interactions
+The ingestion stage reads the review and metadata files and creates the user, item, and interaction tables.  
+It also generates an ingestion manifest with row counts, columns, and SHA-256 hashes for provenance.  
 
-The project uses the public Amazon Software dataset and stores the raw files under `data/raw/`.  
-An ingestion manifest is also generated in `data/raw/ingestion_manifest.json`, which records file-level and table-level metadata including row counts, columns, file sizes, and SHA-256 hashes.  
+The validation stage checks missing values, duplicates, data types, rating ranges, timestamps, and referential integrity between interactions and the user and item tables.  
+Rejected records are saved in error datasets with reasons, and the results are recorded in a validation report.  
+A separate fault-injection demonstration applies the checks to deliberately corrupted input.
 
-## 4. Data validation and quality checks
+| Dataset | Input rows | Valid rows | Rejected rows |
+|---|---:|---:|---:|
+| Users | 1,826 | 1,826 | 0 |
+| Items | 26,790 | 21,639 | 5,151 |
+| Interactions | 12,805 | 11,984 | 821 |
 
-The validation stage is a central part of the pipeline. It includes schema and other checks ensures that the data is valid before it is used for modeling.  
-The validation layer checks for the following:
-1. missing values
-2. duplicate rows
-3. incorrect data types
-4. out-of-range ratings
-5. invalid timestamps
-6. referential integrity between interactions, users, and items
+## 4. Preparation, Transformation, and Features
 
-Rejected rows are written into `data/errors/` and logged with explicit reasons, while valid records are retained in processed Parquet tables.  
-A validation report is also generated for each execution.  
-In addition to the real dataset validation, the project includes a fault-injection validation workflow that deliberately corrupts a copy of the inputs to demonstrate that all validation rules behave correctly.  
+Preparation cleans and standardizes text and item attributes, parses and imputes prices, handles missing values, and resolves repeated user-item interactions.  
+A chronological split separates older training interactions from later test interactions. For the reported run, the cutoff was **2015-09-30**, with **9,505 training rows** and **2,379 test rows**.
 
-## 5. Data Preparation and Transformation
+Transformation produces user activity summaries, an item popularity table, a sparse user-item interaction matrix, and user and item index mappings.
 
-Once the data passes validation, the preparation stage cleans and standardizes the records. This includes:
-1. handling missing values
-2. correcting price-related issues
-3. standardizing text values
-4. removing duplicate user-item interactions and keeping the latest valid interaction
-5. creating train/test splits based on time
+The custom feature layer defines **22 features**: eight user features, nine item features, and five interaction features.  Examples include user average rating and activity count, item popularity and average rating, recency, preferred category, and category match. The feature catalog documents their definitions and sources.
 
-The data is split in a time-based manner rather than randomly to avoid look-ahead leakage.  
-This is important in recommendation systems because a random split can allow future interactions to leak into model training.  
-A time-based split also better simulates real deployment conditions, where the system recommends items to users based on past behavior and evaluates future interactions.  
+The current models use only a subset of these features. Interaction features are materialized for potential downstream use but are not directly used in the current ranking models.
 
-The transformation stage then converts the prepared data into useful summary structures:
-1. user activity summaries
-2. item popularity summaries
-3. sparse user-item interaction matrix
-4. index mappings for users and items
+## 5. Model Training and Evaluation
 
-## 6. Feature Management
+Two recommenders were trained:
 
-A key part of the project is the custom feature layer. Features are organized into:
-1. user features
-2. item features
-3. interaction features
+1. **Popularity baseline:** ranks items by their number of training interactions.
+2. **Personalized SVD recommender:** uses truncated matrix factorization over the user-item interaction matrix to generate personalized rankings.
 
-The feature layer is reusable and is intended to support both training-time and serving-time use cases.  
-The feature layer is important because it makes the pipeline more maintainable and prevents feature logic from being duplicated or drifted across modules.
+MLflow records model parameters, metrics, and artifacts. Evaluation uses **K = 10**, with a test rating of at least 4 treated as relevant. Previously seen training items are excluded from recommendation lists.
 
-## 7. Model Training
+The ranking evaluation covers **311 users** with training history and at least one relevant future item in the training catalog. RMSE and MAE are calculated on **710 test interactions** whose users and items are both known from training. Thus, these metrics do not represent every test interaction.
 
-Two recommendation models have been trained and compared:
+| Model | Precision@10 | Recall@10 | NDCG@10 | Coverage | Diversity | RMSE | MAE |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| Popularity | 0.0058 | 0.0233 | 0.0138 | 0.0208 | 0.8536 | 1.3752 | 1.1192 |
+| SVD | 0.0161 | 0.1046 | 0.0703 | 0.3781 | 0.8037 | 1.1953 | 0.9637 |
 
-### 7.1 Popularity baseline
-* This model ranks items based on how frequently they were interacted with in the training data. 
-* It is a straightforward baseline and provides a useful lower bound for recommendation quality.
+On this offline evaluation subset, SVD performs better on precision, recall, NDCG, coverage, RMSE, and MAE. The popularity baseline has higher intra-list diversity.
 
-### 7.2 Personalized SVD recommender
-* This model uses matrix factorization to learn latent user-item representations. 
-* It captures individual user preferences and provides a personalized ranking signal, which is more aligned with recommendation tasks than a global popularity score.  
+## 6. Orchestration and Reproducibility
 
-The models are trained with deterministic settings and their runs are logged using MLflow. This allows experiment tracking for parameters, metrics, run metadata, and model artifacts.   
-The following details are logged:
-1. model name
-2. hyperparameters
-3. training time
-4. data provenance
-5. evaluation metrics
-6. artifacts  
+Prefect runs the pipeline stages in dependency order and records their execution states. The repository includes setup instructions, pinned dependencies, configuration, reports, and a workflow that can be run once or served on a schedule.
 
-This makes the project reproducible and easier to compare across model versions.
+After creating the Python environment and installing dependencies as described in the README, the complete pipeline can be run with:
 
-## 8. Model Evaluation
+```bash
+.venv/bin/python dags/recsys_flow.py
+```
 
-The evaluation stage compares both models using ranking metrics and rating metrics.
+## 7. Limitations
 
-Ranking metrics:
-1. Precision@10
-2. Recall@10
-3. NDCG@10
-4. Coverage
-5. Diversity
+The following limitations were seen in the current execution of the code:
+* Evaluation is offline and excludes test interactions involving users or items absent from training. Cold-start performance is  therefore not fully represented by the reported metrics.
+* The interaction data is sparse, and no online A/B test was performed.
+* Repeated user-item interactions are currently deduplicated before the time split. Consequently, a later interaction can cause an earlier interaction for the same pair to be removed from training.
+* The comparison uses one popularity baseline and one personalized model, and extensive hyperparameter tuning was not performed.
 
-Rating metrics:
-1. RMSE
-2. MAE
+## 8. Future Improvements
 
-The evaluation is performed on a time-based holdout set and uses relevant interactions defined as ratings greater than or equal to 4.  
-Items already seen in training are excluded from the evaluation list to avoid trivial memorisation.  
-The results show that the personalized SVD model outperforms the popularity baseline in most ranking metrics, particularly in recall and NDCG, while also improving coverage and reducing RMSE and MAE.   
-This demonstrates and proves that personalization adds meaningful value over a simple popularity-based recommendation.
-
-## 9. Orchestration and Reproducibility
-
-The end-to-end workflow is orchestrated using Prefect. The flow runs the full pipeline in dependency order and produces a clean execution trail.  
-The orchestration layer ensures that:
-1. all stages execute in sequence
-2. failures are visible
-3. logs are captured
-4. runs are reproducible
-5. the workflow can be scheduled
-
-The pipeline is fully reproducible with a single command:
-1. create a virtual environment
-2. install dependencies
-3. run the Prefect workflow
-
-## 10. Serving and Recommendation use
-
-The project also includes a recommendation service that can generate suggestions for:
-1. a known user
-2. a new user with a few given reviews
-3. an unknown user with no prior history
-
-The code can recommend items based on either learned user preferences or a popularity fallback when no history exists.
-
-## 11. Limitations
-
-The current version of the code has the following limitations:
-1. the evaluation is offline rather than online
-2. the dataset is sparse
-3. some cold-start and cold-item challenges remain
-4. only a baseline and one personalized model were trained
-5. no large-scale hyperparameter tuning was performed
-
-## 12. Conclusion
-
-* In this project, I have created a complete and end-to-end recommendation pipeline covering the required stages of ingestion, validation, preparation, transformation, feature management, model training, evaluation, and orchestration. 
-* The code provides a clean and modularised structure, reproducible execution, validation, and a clear comparison between a popularity baseline and a personalized SVD model.
-* There are a few limitations in the current version of the code, but the code is still durable and consistent enough to carefully ingest, validate, and transform the data; train models on good, validated, and clean data; perform rigorous testing and evaluation of the model; and use the trained model to provide recommendations to users and also run on a schedule if needed.
+Possible future improvements include:
+* time-safe handling of repeated interactions
+* separate cold-start evaluation
+* integrating a hybrid model that incorporates item attributes into ranking
