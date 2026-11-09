@@ -1,6 +1,6 @@
 # Feature Catalog
 
-All features are computed from **training data only**
+Interaction-derived aggregates use training interactions. Item attributes and price imputation use the cleaned item metadata; historical availability is not established.
 
 ## User features
 
@@ -33,8 +33,8 @@ All features are computed from **training data only**
 
 | Feature | Type | Description | Formula / logic | Source |
 |---|---|---|---|---|
-| `interaction_category_match` | int | 1 if the item's category equals the user's preferred category. | `item_category == user_preferred_category` | user + item features |
-| `interaction_brand_match` | int | 1 if the item's brand equals the user's preferred brand. | `item_brand == user_preferred_brand` | user + item features |
+| `interaction_category_match` | nullable Int64 | 1 if category matches, 0 if it does not, missing if either value is unavailable. | `item_category == user_preferred_category` | user + item features |
+| `interaction_brand_match` | nullable Int64 | 1 if brand matches, 0 if it does not, missing if either value is unavailable. | `item_brand == user_preferred_brand` | user + item features |
 | `interaction_price_ratio` | float | Item price relative to what the user usually pays. | `item_price / user_avg_price` | user + item features |
 | `interaction_rating_minus_user_avg` | float | How much the rating deviates from the user's average (training only). | `rating - user_avg_rating` | train.parquet |
 | `interaction_days_before_as_of` | float | Age of the interaction at the reference date. | `(as_of - timestamp) / 86400` | train.parquet |
