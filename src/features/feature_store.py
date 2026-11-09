@@ -140,7 +140,7 @@ def write_catalog(cfg: dict, store: FeatureStore) -> Path:
     lines = [
         "# Feature Catalog",
         "",
-        f"All features are computed from **training data only**",
+        "Interaction-derived aggregates use training interactions. Item attributes and price imputation use the cleaned item metadata; historical availability is not established.",
         "",
     ]
     for entity, title in (("user", "User features"), ("item", "Item features"), ("interaction", "Interaction features")):

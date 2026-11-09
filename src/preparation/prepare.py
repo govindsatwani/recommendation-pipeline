@@ -102,7 +102,7 @@ def run(cfg: dict | None = None) -> dict:
 
     users = prepare_users(pd.read_parquet(src / "users.parquet"))
     items = prepare_items(pd.read_parquet(src / "items.parquet"))
-        inter, stats = prepare_interactions(pd.read_parquet(src / "interactions.parquet"), users, items)
+    inter, stats = prepare_interactions(pd.read_parquet(src / "interactions.parquet"), users, items)
 
     train, test, cutoff = time_split(inter, cfg["split"]["test_fraction"])
     stats["repeated_user_item_pairs_removed"] = len(inter) - len(train) - len(test)

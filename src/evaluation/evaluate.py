@@ -20,6 +20,9 @@ def build_eval_set(test: pd.DataFrame, data: TrainData, threshold: float):
         & test["item_id"].isin(data.item_idx)
     ]
 
+    if known.empty:
+        return known, {}
+
     rows = known["user_id"].map(data.user_idx).to_numpy(dtype=int)
     cols = known["item_id"].map(data.item_idx).to_numpy(dtype=int)
     seen = np.asarray(data.R[rows, cols]).ravel() != 0
