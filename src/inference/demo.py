@@ -38,7 +38,7 @@ def run(cfg: dict | None = None, k: int = 5) -> str:
     for m in ("svd", "popularity"):
         out += [f"**Top-{k} - {m}**", "", _table(svc[m].recommend(user, k).drop(columns=["item_id"])), ""]
     if len(future):
-        out += ["**Items this user actually rated >= 4 in the later test period (known items):**", "",
+        out += ["**Items this user actually rated >= 4 in the later test period:**", "",
                 _table(future[["item_id", "title", "rating"]].head(10)), ""]
     out += ["## 2. New user described only by reviews", "",
             "Reviews supplied: " + "; ".join(f"{titles.get(i, i)[:50]} -> {r:.0f}*" for i, r in history.items()), "",

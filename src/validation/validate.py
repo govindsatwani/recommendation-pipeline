@@ -19,6 +19,31 @@ def _integer_like(s: pd.Series) -> pd.Series:
     n = pd.to_numeric(s, errors="coerce")
     return n.notna() & (n == n.round())
 
+def _valid_vote(s: pd.Series) -> pd.Series:
+    valid_format = s.str.fullmatch(
+        r"(?:[0-9]+|[0-9]{1,3}(?:,[0-9]{3})+)",
+        na=False,
+    )
+
+    result = pd.Series(False, index=s.index)
+
+    normalized = (
+        s[valid_format]
+        .str.replace(",", "", regex=False)
+        .str.lstrip("0")
+    )
+    normalized = normalized.mask(normalized == "", "0")
+
+    result.loc[valid_format] = (
+        (normalized.str.len() < 19)
+        | (
+            (normalized.str.len() == 19)
+            & (normalized <= "9223372036854775807")
+        )
+    )
+
+    return result
+
 def build_schemas(cfg: dict) -> dict[str, pa.DataFrameSchema]:
     v = cfg["validation"]
     ts_min = pd.Timestamp(v["timestamp_min"], tz="UTC").timestamp()
@@ -57,7 +82,14 @@ def build_schemas(cfg: dict) -> dict[str, pa.DataFrameSchema]:
             "verified": pa.Column(
                 str, nullable=False, checks=pa.Check.isin(["True", "False", "true", "false"], name="dtype_boolean")
             ),
-            "vote": pa.Column(str, nullable=True),
+            "vote": pa.Column(
+                str,
+                nullable=True,
+                checks=pa.Check(
+                    _valid_vote,
+                    name="nonnegative_integer",
+                ),
+            ),
             "summary": pa.Column(str, nullable=True),
         },
         strict=False,
@@ -176,7 +208,7 @@ def _cast_clean(clean: dict[str, pd.DataFrame]) -> dict[str, pd.DataFrame]:
     i["rating"] = pd.to_numeric(i["rating"]).astype("float64")
     i["timestamp"] = pd.to_numeric(i["timestamp"]).astype("int64")
     i["verified"] = i["verified"].str.lower().eq("true")
-    i["vote"] = pd.to_numeric(i["vote"].str.replace(",", "", regex=False), errors="coerce")
+    i["vote"] = (i["vote"].str.replace(",", "", regex=False).astype("Int64"))
     clean = {**clean, "interactions": i.reset_index(drop=True)}
     clean["users"] = clean["users"].reset_index(drop=True)
     clean["items"] = clean["items"].reset_index(drop=True)

@@ -73,19 +73,26 @@ def prepare_interactions(inter: pd.DataFrame, users: pd.DataFrame, items: pd.Dat
     df["helpful_votes"] = df["vote"].fillna(0).astype(int)
     df["event_time"] = pd.to_datetime(df["timestamp"], unit="s", utc=True)
     df["rating"] = df["rating"].astype(float)
-    df = df.sort_values(["timestamp"], kind="stable") # keeping the most recent review from the same user
-    before = len(df)
-    df = df.drop_duplicates(["user_id", "item_id"], keep="last")
-    stats["repeated_user_item_pairs_removed"] = int(before - len(df))
     df = df[df["user_id"].isin(users["user_id"]) & df["item_id"].isin(items["item_id"])]
     stats["rows_out"] = int(len(df))
     cols = ["user_id", "item_id", "rating", "timestamp", "event_time", "verified", "helpful_votes", "summary"]
     return df[cols].sort_values("timestamp", kind="stable").reset_index(drop=True), stats
 
 def time_split(df: pd.DataFrame, test_fraction: float) -> tuple[pd.DataFrame, pd.DataFrame, int]:
-    cutoff = int(np.quantile(df["timestamp"].to_numpy(), 1 - test_fraction)) # Older rows used for training, newer `test_fraction` used for testing
-    train = df[df["timestamp"] < cutoff].reset_index(drop=True)
-    test = df[df["timestamp"] >= cutoff].reset_index(drop=True)
+    cutoff = int(np.ceil(np.quantile(df["timestamp"].to_numpy(), 1 - test_fraction)))
+
+    train = (
+        df[df["timestamp"] < cutoff]
+        .sort_values("timestamp", kind="stable")
+        .drop_duplicates(["user_id", "item_id"], keep="last")
+        .reset_index(drop=True)
+    )
+    test = (
+        df[df["timestamp"] >= cutoff]
+        .sort_values("timestamp", kind="stable")
+        .drop_duplicates(["user_id", "item_id"], keep="last")
+        .reset_index(drop=True)
+    )
     return train, test, cutoff
 
 def run(cfg: dict | None = None) -> dict:
@@ -95,10 +102,14 @@ def run(cfg: dict | None = None) -> dict:
 
     users = prepare_users(pd.read_parquet(src / "users.parquet"))
     items = prepare_items(pd.read_parquet(src / "items.parquet"))
-    inter, stats = prepare_interactions(pd.read_parquet(src / "interactions.parquet"), users, items)
-    log.info("Duplicates resolved: %d repeated user-item pairs removed", stats["repeated_user_item_pairs_removed"])
+        inter, stats = prepare_interactions(pd.read_parquet(src / "interactions.parquet"), users, items)
 
     train, test, cutoff = time_split(inter, cfg["split"]["test_fraction"])
+    stats["repeated_user_item_pairs_removed"] = len(inter) - len(train) - len(test)
+    log.info(
+        "Duplicates resolved within time partitions: %d repeated user-item rows removed",
+        stats["repeated_user_item_pairs_removed"],
+    )
     assert train["timestamp"].max() < test["timestamp"].min(), "time split leaked"
 
     train_users, train_items = set(train["user_id"]), set(train["item_id"])
@@ -108,7 +119,7 @@ def run(cfg: dict | None = None) -> dict:
         "cutoff_date": str(pd.to_datetime(cutoff, unit="s", utc=True).date()),
         "train_rows": int(len(train)),
         "test_rows": int(len(test)),
-        "test_fraction_actual": round(len(test) / len(inter), 4),
+        "test_fraction_actual": round(len(test) / (len(train) + len(test)), 4),
         "train_users": len(train_users),
         "train_items": len(train_items),
         "test_rows_cold_user": int((~test["user_id"].isin(train_users)).sum()),

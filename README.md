@@ -56,6 +56,7 @@ Then run `.venv/bin/python dags/recsys_flow.py` as mentioned below.
 ## Single command to run the whole pipeline
 
 ```bash
+export PREFECT_SERVER_ANALYTICS_ENABLED=false
 export MLFLOW_DISABLE_AGENT_HINT=1
 .venv/bin/python dags/recsys_flow.py
 ```
@@ -103,6 +104,7 @@ Individual stages of the pipeline can also be run on their own:
 # unknown user without reviews -> popularity fallback
 .venv/bin/python predict.py --user_id SOMEONE_NEW
 ```
+NOTE: Supplied history ratings must be finite and within the configured rating range. Every supplied item ID must be in the training catalog, otherwise the command reports the unknown IDs.
 
 The model can be chosen using the flag `--model {popularity,svd}` (default model is `svd`).
 
@@ -131,10 +133,10 @@ recommendation-pipeline/
     ├── model_comparison.json
     ├── model_comparison.md
     ├── sample_recommendations.md
-    ├── validate_report_fault_injcetion.json
-    ├── validate_report_fault_injcetion.md
-    ├── validate_report.json
-    └── validate_report.md
+    ├── validation_report_fault_injcetion.json
+    ├── validation_report_fault_injcetion.md
+    ├── validation_report.json
+    └── validation_report.md
 ├── src/
     ├── evaluation/
     ├── features/

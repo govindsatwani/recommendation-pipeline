@@ -7,9 +7,21 @@ from src.inference.recommend import DEFAULT_MODEL, MODELS, RecommendationService
 
 def parse_history(text: str) -> dict[str, float]:
     out = {}
+
     for part in text.split(","):
-        item, rating = part.split(":")
-        out[item.strip()] = float(rating)
+        item, sep, rating = part.partition(":")
+        item = item.strip()
+
+        if not sep or not item or not rating.strip():
+            raise ValueError("Each review must use item_id:rating")
+
+        if item in out:
+            raise ValueError(f"Duplicate item in history: {item}")
+
+        try:
+            out[item] = float(rating)
+        except ValueError as exc:
+            raise ValueError(f"Invalid rating for item {item}: {rating!r}") from exc
     return out
 
 def main() -> None:
@@ -27,7 +39,11 @@ def main() -> None:
     svc = RecommendationService(model=a.model)
     if a.show_history and a.user_id:
         print(f"\nPast reviews of {a.user_id}:\n{svc.user_history(a.user_id).to_string(index=False)}")
-    recs = svc.recommend(a.user_id, a.k, parse_history(a.history) if a.history else None)
+    try:
+        history = (parse_history(a.history) if a.history is not None else None)
+        recs = svc.recommend(a.user_id, a.k, history)
+    except ValueError as exc:
+        p.error(str(exc))
     print(f"\nTop-{a.k} recommendations - source: {recs.attrs['source']}\n")
     print(recs.to_string(index=False))
 

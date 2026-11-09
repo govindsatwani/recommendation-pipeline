@@ -50,6 +50,8 @@ The custom feature layer defines **22 features**: eight user features, nine item
 
 The current models use only a subset of these features. Interaction features are materialized for potential downstream use but are not directly used in the current ranking models.
 
+Nonmissing helpful-vote counts must be nonnegative integers; missing counts are filled with zero during preparation.
+
 ## 5. Model Training and Evaluation
 
 Two recommenders were trained:
