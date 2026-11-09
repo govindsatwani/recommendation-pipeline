@@ -28,7 +28,7 @@ def _file_hash(path) -> str:
     return hashlib.sha256(open(path, "rb").read()).hexdigest()[:16]
 
 def train_model(name: str, cfg: dict | None = None) -> str:
-    # Train one model, log it to MLflow and then returning the MLflow run id
+    # Training one model, logging it to MLflow and then returning the MLflow run id
     cfg = cfg or load_config()
     log = get_logger("training", cfg)
     set_seed(cfg["project"]["seed"])

@@ -95,7 +95,6 @@ class _RatingBaseline:
 
 class PopularityRecommender(Recommender):
     # Baseline: recommend the most-interacted-with items
-
     name = "popularity"
 
     def __init__(self, prior_strength: float = 5.0):
@@ -119,7 +118,6 @@ class PopularityRecommender(Recommender):
 
 class SVDRecommender(Recommender):
     # Matrix factorisation (truncated SVD)
-
     name = "svd"
 
     def __init__(self, n_factors: int = 20, rating_factors: int = 20):

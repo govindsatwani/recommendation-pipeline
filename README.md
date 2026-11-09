@@ -1,9 +1,10 @@
 # Recommendation Pipeline - Data Management for Machine Learning (Assignment 2)
 
-**Author:** Govind Satwani  |  **Roll No.:** 2025AG05056
+**Name:** Govind Satwani  
+**Roll No.:** 2025AG05056
 
-This repository contains an end-to-end pipeline for a product recommender trained on the **Amazon Reviews 2018 - Software (5-core)** dataset (J. McAuley lab, UCSD). 
-The pipeline ingests raw reviews and product metadata, validates them, prepares and transforms them, builds a feature layer, trains and evaluates two recommenders.
+This repository contains an end-to-end pipeline for a product recommendation system trained on the **Amazon Reviews 2018 - Software (5-core)** dataset (J. McAuley lab, UCSD).   
+The pipeline ingests raw reviews and product metadata, validates them, prepares and transforms them, builds a feature layer, trains and evaluates two recommenders.  
 The entire pipeline is orchestrated end to end with Prefect.
 
 ![architecture](docs/architecture.png)
@@ -23,13 +24,13 @@ The entire pipeline is orchestrated end to end with Prefect.
 | Serving | `src/inference/`, `predict.py` | `reports/sample_recommendations.md` |
 
 Models: **popularity baseline** and **SVD matrix factorisation** (personalised). 
-1. The full write-up can be found in [reports/final_report.md](reports/final_report.md).
+1. The final report can be found in [reports/final_report.md](reports/final_report.md).
 2. The feature documentation can be found in [reports/feature_catalog.md](reports/feature_catalog.md).
 
 ## Setup
 
 1. **Python 3.14** on Linux has been used for the code.
-2. The pinned versions in `requirements.txt` are the tested set.
+2. The pinned versions in `requirements.txt` have been installed and used.
 3. The first run requires the dataset to be downloaded (size ~20MB) - hence the first run takes 3-4 minutes to download the dataset.
 4. Subsequent runs use the cached version of the dataset, and start processing the data instantly.
 
@@ -40,9 +41,9 @@ python3 -m venv .venv
 ```
 ## Starting from a clean state (optional)
 
-Not required, because every stage overwrites its outputs. 
-This can be used to reproduce the run from scratch, including the dataset download. Howver, the MLflow and Prefect servers need to be stopped first.
-The below commands can be run to clean up the files from the previous runs.
+This is not a required step, because every stage overwrites its outputs.  
+This can be used to reproduce the run from scratch, including the dataset download. Howver, the MLflow and Prefect servers need to be stopped first.  
+The below commands can be run to clean up the files from the previous runs.  
 
 ```bash
 rm -f data/raw/*.gz data/raw/items.zip data/raw/*.csv data/raw/ingestion_manifest.json
@@ -50,7 +51,7 @@ rm -rf data/raw/faulty data/errors data/processed/* data/features/*.parquet data
 rm -rf models/*.joblib models/runs mlflow.db mlartifacts logs
 find reports -type f ! -name final_report.md -delete
 ```
-Then run `.venv/bin/python dags/recsys_flow.py` as follows.
+Then run `.venv/bin/python dags/recsys_flow.py` as mentioned below.
 
 ## Single command to run the whole pipeline
 
@@ -59,21 +60,22 @@ export MLFLOW_DISABLE_AGENT_HINT=1
 .venv/bin/python dags/recsys_flow.py
 ```
 
-The flow runs: ingest -> validate -> prepare -> transform -> features -> train popularity / SVD models -> evaluate -> demo recommendations.
-Runs are deterministic (seed 42): two consecutive runs give identical metrics.
+The flow runs: ingest -> validate -> prepare -> transform -> features -> train popularity and SVD models -> evaluate -> demo recommendations.  
+Runs are deterministic (seed 42): two consecutive runs give identical metrics.  
 
-The code is also capable of scheduled execution. Prefect only fires schedules against a real server, so start `prefect server start` first and serve the flow against it (sample scheduled execution at 2:00 AM):
+The code is also capable of scheduled execution. Prefect only fires schedules against a real server, so `prefect server start` command needs to be run first and the flow needs to be served against it.  
+The below command can be used to schedule a run everyday at 02:00 AM UTC:
 
 ```bash
-.venv/bin/prefect server start  # execute on terminal 1
-PREFECT_API_URL=http://127.0.0.1:4200/api .venv/bin/python dags/recsys_flow.py --serve "0 2 * * *"  # execute on terminal 2
+.venv/bin/prefect server start  # execute on current open terminal
+PREFECT_API_URL=http://127.0.0.1:4200/api .venv/bin/python dags/recsys_flow.py --serve "0 2 * * *"  # open a new terminal and then execute
 ```
 
 UIs:
 
 ```bash
-.venv/bin/mlflow server --backend-store-uri sqlite:///mlflow.db --port 5000   # http://127.0.0.1:5000 -> experiment "software-recommender"
-.venv/bin/prefect server start       # http://127.0.0.1:4200 -> then run the flow with PREFECT_API_URL=http://127.0.0.1:4200/api
+.venv/bin/mlflow server --backend-store-uri sqlite:///mlflow.db --port 5000   # go to http://127.0.0.1:5000 on the browser -> experiment "software-recommender"
+.venv/bin/prefect server start       # go to http://127.0.0.1:4200 on the browser
 ```
 
 Individual stages of the pipeline can also be run on their own:
@@ -102,12 +104,12 @@ Individual stages of the pipeline can also be run on their own:
 .venv/bin/python predict.py --user_id SOMEONE_NEW
 ```
 
-Choose the model with `--model {popularity,svd}` (default model is `svd`).
+The model can be chosen using the flag `--model {popularity,svd}` (default model is `svd`).
 
 ## Project layout
 
 ```text
-.
+recommendation-pipeline/
 ├── configs/
 │   └── config.yaml # All parameters used throughout the process
 ├── dags/
@@ -157,6 +159,6 @@ Choose the model with `--model {popularity,svd}` (default model is `svd`).
 * The dataset is small and sparse (density ~0.8%); about half of the test interactions involve items that were never seen in training and cannot be recommended by collaborative models.
 * The user table only holds an id and name; whereas the user attributes are derived from interaction history.
 * `data/raw/items.csv`, `data/processed/`, `data/features/*.parquet`, `models/*.joblib`, `mlflow.db`/`mlartifacts/` and `logs/` are git-ignored and rebuilt by the pipeline.
-* The downloaded `.gz` files, `data/raw/items.zip` (zipped because the CSV is 41 MB), `models/runs/*.json`, `data/errors/`, `reports/` and `docs/screenshots/` are committed as evidence of my own run. A rerun overwrites them.
-* The small raw CSVs, the error datasets (`data/errors/`) and all generated reports (`reports/`) are committed for visibility in the operation of the pipeline.
+* The downloaded `.gz` files, `data/raw/items.zip` (zipped because the CSV is 41 MB), `models/runs/*.json`, `data/errors/`, `reports/` and `docs/screenshots/` are committed as evidence of my own run. A rerun will overwrite them.
+* The small raw CSVs, the error datasets (`data/errors/`) and all generated reports (`reports/`) are committed for visibility into the operation of the pipeline.
 * Screenshots for all the tools and executed steps of the pipeline can be found [here](docs/screenshots).

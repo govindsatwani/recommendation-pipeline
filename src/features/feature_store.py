@@ -99,7 +99,7 @@ class FeatureStore:
         self.log.info("Materialized %d features: users=%d items=%d interactions=%d", len(FEATURES), len(user), len(item), len(inter))
         return meta
 
-    # online / read
+    # read
     def load(self) -> "FeatureStore":
         self._user = pd.read_parquet(self.dir / "user_features.parquet")
         self._item = pd.read_parquet(self.dir / "item_features.parquet")
