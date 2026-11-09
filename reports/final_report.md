@@ -4,7 +4,7 @@ GitHub repository: https://github.com/govindsatwani/recommendation-pipeline
 
 Name: Govind Satwani  
 Roll No.: 2025AG05056  
-Course: Data Management for Machine Learning (Assignment 2)
+Course: Data Management for Machine Learning
 
 ## 1. Problem Statement
 

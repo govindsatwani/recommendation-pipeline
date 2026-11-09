@@ -1,4 +1,4 @@
-# Recommendation Pipeline - Data Management for Machine Learning (Assignment 2)
+# Recommendation Pipeline for Software Product recommendations
 
 **Name:** Govind Satwani  
 **Roll No.:** 2025AG05056
