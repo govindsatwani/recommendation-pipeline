@@ -1,4 +1,4 @@
-# Recommendation Pipeline for Software Product recommendations
+# Recommendation Pipeline for Software Products
 
 **Name:** Govind Satwani  
 **Roll No.:** 2025AG05056
