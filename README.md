@@ -31,7 +31,7 @@ Models: **popularity baseline** and **SVD matrix factorisation** (personalised).
 
 1. **Python 3.14** on Linux has been used for the code.
 2. The pinned versions in `requirements.txt` have been installed and used.
-3. The first run requires the dataset to be downloaded (size ~20MB) - hence the first run takes 3-4 minutes to download the dataset.
+3. The first run requires the dataset to be downloaded (if the below 'Starting from a clean state' steps are executed, else the already available .gz files can be reused) - hence the first run takes 3-4 minutes to download the dataset.
 4. Subsequent runs use the cached version of the dataset, and start processing the data instantly.
 
 ### Command to set up the environment and install all dependencies and libraries
@@ -180,7 +180,7 @@ recommendation-pipeline/
 * Evaluation is offline (time-based 80/20 split, K=10, relevant = rating >= 4). No live A/B test is being done.
 * The dataset is small and sparse (density ~0.8%); about half of the test interactions involve items that were never seen in training and cannot be recommended by collaborative models.
 * The user table only holds an id and name; whereas the user attributes are derived from interaction history.
-* The current `.gitignore` ignores the generated contents of `data/processed/` except `.gitkeep`, model `.joblib` files, and the MLflow database and artifact directories. Other generated paths, including `data/raw/items.csv`, feature Parquet files and logs, are not currently ignored and should be reviewed before committing.
+* The current `.gitignore` ignores the generated contents of `data/processed/` except `.gitkeep` and `split_info.json`, model `.joblib` files, and the MLflow database and artifact directories. Other generated paths, including `data/raw/items.csv`, feature Parquet files and logs, are not currently ignored and should be reviewed before committing.
 * The downloaded `.gz` files, `data/raw/items.zip` (zipped because the CSV is 41 MB), `models/runs/*.json`, `data/errors/`, `reports/` and `docs/screenshots/` are committed as evidence of my own run. A rerun will overwrite some generated files.
 * The small raw CSVs, the error datasets (`data/errors/`) and all generated reports (`reports/`) are committed for visibility into the operation of the pipeline.
 * Screenshots for all the tools and executed steps of the pipeline can be found [here](docs/screenshots).

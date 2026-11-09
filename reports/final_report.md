@@ -41,8 +41,9 @@ A separate fault-injection demonstration applies the checks to deliberately corr
 
 ## 4. Preparation, Transformation, and Features
 
-Preparation cleans and standardizes text and item attributes, parses and imputes prices, handles missing values, and resolves repeated user-item interactions.  
-A chronological split separates older training interactions from later test interactions. For the reported run, the cutoff was **2015-09-30**, with **9,505 training rows** and **2,379 test rows**.
+Preparation cleans and standardizes text and item attributes, parses and imputes prices, and handles missing values. Interactions are split chronologically before repeated user-item pairs are deduplicated separately within each partition. This preserves an earlier training interaction even when the same user interacts with the item again in the test period.
+
+For the reported run, the cutoff was **2015-10-04 09:36:00 UTC**, with **9,528 training rows** and **2,359 test rows** after within-partition deduplication.
 
 Transformation produces user activity summaries, an item popularity table, a sparse user-item interaction matrix, and user and item index mappings.
 
@@ -61,12 +62,13 @@ Two recommenders were trained:
 
 MLflow records model parameters, metrics, and artifacts. Evaluation uses **K = 10**, with a test rating of at least 4 treated as relevant. Previously seen training items are excluded from recommendation lists.
 
-The ranking evaluation covers **311 users** with training history and at least one relevant future item in the training catalog. RMSE and MAE are calculated on **710 test interactions** whose users and items are both known from training. Thus, these metrics do not represent every test interaction.
+The ranking evaluation covers **308 users** with training history and at least one relevant future item that is in the training catalog and was not previously seen by that user.  
+RMSE and MAE are calculated on **703 test interactions** whose users and items are known from training. These rating-evaluation pairs can include repeated user-item interactions.
 
 | Model | Precision@10 | Recall@10 | NDCG@10 | Coverage | Diversity | RMSE | MAE |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| Popularity | 0.0058 | 0.0233 | 0.0138 | 0.0208 | 0.8536 | 1.3752 | 1.1192 |
-| SVD | 0.0161 | 0.1046 | 0.0703 | 0.3781 | 0.8037 | 1.1953 | 0.9637 |
+| popularity | 0.0052 | 0.0203 | 0.0115 | 0.0208 | 0.8536 | 1.3723 | 1.1166 |
+| svd | 0.0156 | 0.1040 | 0.0686 | 0.3781 | 0.8047 | 1.1972 | 0.9643 |
 
 On this offline evaluation subset, SVD performs better on precision, recall, NDCG, coverage, RMSE, and MAE. The popularity baseline has higher intra-list diversity.
 
@@ -77,20 +79,20 @@ Prefect runs the pipeline stages in dependency order and records their execution
 After creating the Python environment and installing dependencies as described in the README, the complete pipeline can be run with:
 
 ```bash
+export PREFECT_SERVER_ANALYTICS_ENABLED=false
 .venv/bin/python dags/recsys_flow.py
 ```
 
 ## 7. Limitations
 
 The following limitations were seen in the current execution of the code:
-* Evaluation is offline and excludes test interactions involving users or items absent from training. Cold-start performance is  therefore not fully represented by the reported metrics.
-* The interaction data is sparse, and no online A/B test was performed.
-* Repeated user-item interactions are currently deduplicated before the time split. Consequently, a later interaction can cause an earlier interaction for the same pair to be removed from training.
-* The comparison uses one popularity baseline and one personalized model, and extensive hyperparameter tuning was not performed.
+* Evaluation is offline and excludes test interactions involving users or items absent from training. Cold-start performance is therefore not fully represented by the reported metrics.
+* Ranking evaluation excludes items already seen by a user in training, while rating evaluation can include repeated user-item pairs.
+* Interaction-derived aggregates use training interactions, but the historical availability of the item metadata used by the feature layer has not been established.
+* The interaction data is sparse, no online A/B test was performed, and extensive hyperparameter tuning was not performed.
 
 ## 8. Future Improvements
 
 Possible future improvements include:
-* time-safe handling of repeated interactions
 * separate cold-start evaluation
 * integrating a hybrid model that incorporates item attributes into ranking
