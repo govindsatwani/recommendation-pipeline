@@ -75,12 +75,12 @@ export PREFECT_SERVER_ANALYTICS_ENABLED=false
 .venv/bin/prefect server start
 ```
 
-To schedule a run every day at 02:00 AM UTC, open a second terminal and run:
+To schedule a run every day at 02:00 AM IST (20:30 UTC), open a second terminal and run:
 
 ```bash
 export PREFECT_API_URL=http://127.0.0.1:4200/api
 export PREFECT_SERVER_ANALYTICS_ENABLED=false
-PREFECT_API_URL=http://127.0.0.1:4200/api .venv/bin/python dags/recsys_flow.py --serve "0 2 * * *"
+PREFECT_API_URL=http://127.0.0.1:4200/api .venv/bin/python dags/recsys_flow.py --serve "30 20 * * *"
 ```
 
 `PREFECT_SERVER_ANALYTICS_ENABLED=false` disables optional Prefect server analytics. It must be set in the server terminal before the server starts.
