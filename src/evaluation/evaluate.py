@@ -15,13 +15,33 @@ from src.training.models import TrainData, item_attribute_matrix, load_training_
 MODEL_ORDER = ["popularity", "svd"]
 
 def build_eval_set(test: pd.DataFrame, data: TrainData, threshold: float):
-    known = test[test["user_id"].isin(data.user_idx) & test["item_id"].isin(data.item_idx)]
-    relevant = known[known["rating"] >= threshold].groupby("user_id")["item_id"].apply(set).to_dict()
+    known = test[
+        test["user_id"].isin(data.user_idx)
+        & test["item_id"].isin(data.item_idx)
+    ]
+
+    if known.empty:
+        return known, {}
+
+    rows = known["user_id"].map(data.user_idx).to_numpy(dtype=int)
+    cols = known["item_id"].map(data.item_idx).to_numpy(dtype=int)
+    seen = np.asarray(data.R[rows, cols]).ravel() != 0
+
+    rankable = known.loc[~seen]
+    relevant = (
+        rankable[rankable["rating"] >= threshold]
+        .groupby("user_id")["item_id"]
+        .apply(set)
+        .to_dict()
+    )
     return known, relevant
 
 def evaluate_model(model, data: TrainData, attrs, test: pd.DataFrame, cfg: dict) -> dict:
     k, thr = cfg["evaluation"]["k"], cfg["evaluation"]["relevance_threshold"]
     pairs, relevant = build_eval_set(test, data, thr)
+    if not relevant:
+        raise ValueError("No unseen relevant test items available for ranking evaluation")
+
     users = sorted(relevant)
     rows = np.array([data.user_idx[u] for u in users])
     R_rows = data.R[rows]
@@ -57,10 +77,12 @@ def results_markdown(df: pd.DataFrame, cfg: dict, ctx: dict) -> str:
         "# Model Evaluation Results",
         "",
         f"* Dataset: {cfg['dataset']['name']}",
-        f"* Split: time-based, train < {ctx['cutoff_date']} <= test",
+                f"* Split: time-based, train < {ctx['cutoff_time']} <= test",
         f"* K = {k}; an item is *relevant* if the test rating >= {cfg['evaluation']['relevance_threshold']}",
         f"* Evaluated users: {ctx['eval_users']} (users with training history and >=1 relevant future item "
-        f"in the training catalog)",
+        f"in the training catalog that was not previously seen by that user)",
+        f"* Rating evaluation pairs: {ctx['eval_rating_pairs']} "
+        f"(known users and items; includes repeat interactions)",
         "",
         "| Model | " + " | ".join(c.replace("precision", "Precision").replace("recall", "Recall").replace("ndcg", "NDCG")
                                   .replace("coverage", "Coverage").replace("diversity", "Diversity")
@@ -94,7 +116,13 @@ def run(cfg: dict | None = None) -> dict:
     df = pd.DataFrame(results).T
     df.index.name = "model"
     df.to_csv(rep / "model_comparison.csv")
-    ctx = {"cutoff_date": info["cutoff_date"], "eval_users": int(df["eval_users"].iloc[0]), "eval_rating_pairs": int(df["eval_rating_pairs"].iloc[0])}
+    ctx = {
+        "cutoff_time": pd.to_datetime(
+            info["cutoff_timestamp"], unit="s", utc=True
+        ).isoformat(),
+        "eval_users": int(df["eval_users"].iloc[0]),
+        "eval_rating_pairs": int(df["eval_rating_pairs"].iloc[0]),
+    }
     (rep / "model_comparison.md").write_text(results_markdown(df, cfg, ctx), encoding="utf-8")
     (rep / "model_comparison.json").write_text(json.dumps(results, indent=2), encoding="utf-8")
     for name in MODEL_ORDER:

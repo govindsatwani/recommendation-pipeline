@@ -33,8 +33,8 @@ FEATURES: list[FeatureDefinition] = [
     FeatureDefinition("item_subcategory", "item", "string", "Second-level product category (may be empty).", "second level of the category path", "items_clean"),
     FeatureDefinition("item_brand", "item", "string", "Brand of the item ('Unknown' if missing).", "cleaned brand text", "items_clean"),
     # interaction features
-    FeatureDefinition("interaction_category_match", "interaction", "int", "1 if the item's category equals the user's preferred category.", "item_category == user_preferred_category", "user + item features"),
-    FeatureDefinition("interaction_brand_match", "interaction", "int", "1 if the item's brand equals the user's preferred brand.", "item_brand == user_preferred_brand", "user + item features"),
+    FeatureDefinition("interaction_category_match", "interaction", "nullable Int64", "1 if category matches, 0 if it does not, missing if either value is unavailable.", "item_category == user_preferred_category", "user + item features"),
+    FeatureDefinition("interaction_brand_match", "interaction", "nullable Int64", "1 if brand matches, 0 if it does not, missing if either value is unavailable.", "item_brand == user_preferred_brand", "user + item features"),
     FeatureDefinition("interaction_price_ratio", "interaction", "float", "Item price relative to what the user usually pays.", "item_price / user_avg_price", "user + item features"),
     FeatureDefinition("interaction_rating_minus_user_avg", "interaction", "float", "How much the rating deviates from the user's average (training only).", "rating - user_avg_rating", "train.parquet"),
     FeatureDefinition("interaction_days_before_as_of", "interaction", "float", "Age of the interaction at the reference date.", "(as_of - timestamp) / 86400", "train.parquet"),

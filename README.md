@@ -31,10 +31,11 @@ Models: **popularity baseline** and **SVD matrix factorisation** (personalised).
 
 1. **Python 3.14** on Linux has been used for the code.
 2. The pinned versions in `requirements.txt` have been installed and used.
-3. The first run requires the dataset to be downloaded (size ~20MB) - hence the first run takes 3-4 minutes to download the dataset.
+3. The first run requires the dataset to be downloaded (if the below 'Starting from a clean state' steps are executed, else the already available .gz files can be reused) - hence the first run takes 3-4 minutes to download the dataset.
 4. Subsequent runs use the cached version of the dataset, and start processing the data instantly.
 
 ### Command to set up the environment and install all dependencies and libraries
+
 ```bash
 python3 -m venv .venv
 .venv/bin/pip install -r requirements.txt
@@ -56,25 +57,44 @@ Then run `.venv/bin/python dags/recsys_flow.py` as mentioned below.
 ## Single command to run the whole pipeline
 
 ```bash
+export PREFECT_SERVER_ANALYTICS_ENABLED=false
 export MLFLOW_DISABLE_AGENT_HINT=1
 .venv/bin/python dags/recsys_flow.py
 ```
 
-The flow runs: ingest -> validate -> prepare -> transform -> features -> train popularity and SVD models -> evaluate -> demo recommendations.  
-Runs are deterministic (seed 42): two consecutive runs give identical metrics.  
+The flow runs: ingest -> validate -> prepare -> transform -> features -> train popularity and SVD models -> evaluate -> demo recommendations.
 
-The code is also capable of scheduled execution. Prefect only fires schedules against a real server, so `prefect server start` command needs to be run first and the flow needs to be served against it.  
-The below command can be used to schedule a run everyday at 02:00 AM UTC:
+The pipeline uses a fixed random seed (42). With the same data, configuration, dependencies and environment, model-quality results should be reproducible; execution-time measurements can vary.
+
+The code is also capable of scheduled execution. Prefect only fires schedules against a real server, so the server needs to be started first and the flow needs to be served against it.
+
+To start the Prefect server, run the following in one terminal:
 
 ```bash
-.venv/bin/prefect server start  # execute on current open terminal
-PREFECT_API_URL=http://127.0.0.1:4200/api .venv/bin/python dags/recsys_flow.py --serve "0 2 * * *"  # open a new terminal and then execute
+export PREFECT_SERVER_ANALYTICS_ENABLED=false
+.venv/bin/prefect server start
 ```
+
+To schedule a run every day at 02:00 AM UTC, open a second terminal and run:
+
+```bash
+export PREFECT_API_URL=http://127.0.0.1:4200/api
+export PREFECT_SERVER_ANALYTICS_ENABLED=false
+PREFECT_API_URL=http://127.0.0.1:4200/api .venv/bin/python dags/recsys_flow.py --serve "0 2 * * *"
+```
+
+`PREFECT_SERVER_ANALYTICS_ENABLED=false` disables optional Prefect server analytics. It must be set in the server terminal before the server starts.
 
 UIs:
 
 ```bash
 .venv/bin/mlflow server --backend-store-uri sqlite:///mlflow.db --port 5000   # go to http://127.0.0.1:5000 on the browser -> experiment "software-recommender"
+```
+
+For the Prefect UI, start the server with analytics disabled:
+
+```bash
+export PREFECT_SERVER_ANALYTICS_ENABLED=false
 .venv/bin/prefect server start       # go to http://127.0.0.1:4200 on the browser
 ```
 
@@ -104,6 +124,8 @@ Individual stages of the pipeline can also be run on their own:
 .venv/bin/python predict.py --user_id SOMEONE_NEW
 ```
 
+NOTE: Supplied history ratings must be finite and within the configured rating range. Every supplied item ID must be in the training catalog, otherwise the command reports the unknown IDs.
+
 The model can be chosen using the flag `--model {popularity,svd}` (default model is `svd`).
 
 ## Project layout
@@ -131,10 +153,10 @@ recommendation-pipeline/
     ├── model_comparison.json
     ├── model_comparison.md
     ├── sample_recommendations.md
-    ├── validate_report_fault_injcetion.json
-    ├── validate_report_fault_injcetion.md
-    ├── validate_report.json
-    └── validate_report.md
+    ├── validation_report_fault_injcetion.json
+    ├── validation_report_fault_injcetion.md
+    ├── validation_report.json
+    └── validation_report.md
 ├── src/
     ├── evaluation/
     ├── features/
@@ -158,7 +180,7 @@ recommendation-pipeline/
 * Evaluation is offline (time-based 80/20 split, K=10, relevant = rating >= 4). No live A/B test is being done.
 * The dataset is small and sparse (density ~0.8%); about half of the test interactions involve items that were never seen in training and cannot be recommended by collaborative models.
 * The user table only holds an id and name; whereas the user attributes are derived from interaction history.
-* `data/raw/items.csv`, `data/processed/`, `data/features/*.parquet`, `models/*.joblib`, `mlflow.db`/`mlartifacts/` and `logs/` are git-ignored and rebuilt by the pipeline.
-* The downloaded `.gz` files, `data/raw/items.zip` (zipped because the CSV is 41 MB), `models/runs/*.json`, `data/errors/`, `reports/` and `docs/screenshots/` are committed as evidence of my own run. A rerun will overwrite them.
+* The current `.gitignore` ignores the generated contents of `data/processed/` except `.gitkeep` and `split_info.json`, model `.joblib` files, and the MLflow database and artifact directories. Other generated paths, including `data/raw/items.csv`, feature Parquet files and logs, are not currently ignored and should be reviewed before committing.
+* The downloaded `.gz` files, `data/raw/items.zip` (zipped because the CSV is 41 MB), `models/runs/*.json`, `data/errors/`, `reports/` and `docs/screenshots/` are committed as evidence of my own run. A rerun will overwrite some generated files.
 * The small raw CSVs, the error datasets (`data/errors/`) and all generated reports (`reports/`) are committed for visibility into the operation of the pipeline.
 * Screenshots for all the tools and executed steps of the pipeline can be found [here](docs/screenshots).

@@ -1,0 +1,22 @@
+{
+  "rows_in": 11984,
+  "rows_out": 11984,
+  "repeated_user_item_pairs_removed": 97,
+  "cutoff_timestamp": 1443951360,
+  "cutoff_date": "2015-10-04",
+  "train_rows": 9528,
+  "test_rows": 2359,
+  "test_fraction_actual": 0.1985,
+  "train_users": 1719,
+  "train_items": 722,
+  "test_rows_cold_user": 589,
+  "test_rows_cold_item": 1212,
+  "train_period": [
+    "2000-06-26",
+    "2015-10-04"
+  ],
+  "test_period": [
+    "2015-10-05",
+    "2018-08-26"
+  ]
+}

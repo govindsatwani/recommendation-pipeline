@@ -6,6 +6,7 @@ __pycache__/
 # large / regenerated artefacts (rebuilt by `python dags/recsys_flow.py`)
 data/processed/*
 !data/processed/.gitkeep
+!data/processed/split_info.json
 models/*.joblib
 mlflow.db
 mlartifacts/

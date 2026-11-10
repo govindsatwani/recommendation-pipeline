@@ -1,8 +1,8 @@
 {
-  "as_of_timestamp": 1443571200.0,
-  "as_of_date": "2015-09-30",
-  "n_user_rows": 1717,
+  "as_of_timestamp": 1443951360.0,
+  "as_of_date": "2015-10-04",
+  "n_user_rows": 1719,
   "n_item_rows": 21639,
-  "n_interaction_rows": 9505,
+  "n_interaction_rows": 9528,
   "n_features": 22
 }

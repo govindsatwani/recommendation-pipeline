@@ -22,6 +22,8 @@ class TrainData:
     store: FeatureStore
     items: pd.DataFrame
     seed: int = 42
+    rating_min: float = RATING_MIN
+    rating_max: float = RATING_MAX
     user_idx: dict = field(init=False)
     item_idx: dict = field(init=False)
 
@@ -34,9 +36,48 @@ class TrainData:
         return float(self.R.data.mean())
 
     def row_from_history(self, history: dict[str, float]) -> sp.csr_matrix:
-        cols = [self.item_idx[i] for i in history if i in self.item_idx]
-        vals = [float(history[i]) for i in history if i in self.item_idx]
-        return sp.csr_matrix((vals, ([0] * len(cols), cols)), shape=(1, len(self.item_ids)))
+        if not history:
+            raise ValueError(
+                "Review history must contain at least one item"
+            )
+
+        unknown = [
+            item for item in history
+            if item not in self.item_idx
+        ]
+
+        if unknown:
+            raise ValueError(
+                "Items not in the training catalog: "
+                + ", ".join(sorted(unknown))
+            )
+
+        cols, vals = [], []
+
+        for item, rating in history.items():
+            try:
+                value = float(rating)
+            except (TypeError, ValueError, OverflowError) as exc:
+                raise ValueError(
+                    f"Invalid rating for item {item}: {rating!r}"
+                ) from exc
+
+            if (
+                not np.isfinite(value)
+                or not self.rating_min <= value <= self.rating_max
+            ):
+                raise ValueError(
+                    f"Rating for {item} must be finite and in "
+                    f"[{self.rating_min}, {self.rating_max}]"
+                )
+
+            cols.append(self.item_idx[item])
+            vals.append(value)
+
+        return sp.csr_matrix(
+            (vals, ([0] * len(cols), cols)),
+            shape=(1, len(self.item_ids)),
+        )
 
 def load_training_data(cfg: dict | None = None) -> TrainData:
     import scipy.sparse as _sp
@@ -52,6 +93,8 @@ def load_training_data(cfg: dict | None = None) -> TrainData:
         store=FeatureStore(cfg).load(),
         items=pd.read_parquet(proc / "items_clean.parquet"),
         seed=cfg["project"]["seed"],
+        rating_min=float(cfg["validation"]["rating_min"]),
+        rating_max=float(cfg["validation"]["rating_max"]),
     )
 
 def item_attribute_matrix(data: TrainData) -> sp.csr_matrix:

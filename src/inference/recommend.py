@@ -49,11 +49,10 @@ class RecommendationService:
         return h.sort_values("timestamp")[["event_time", "item_id", "title", "brand", "category", "rating"]]
 
     def recommend(self, user_id: str | None = None, k: int = 10, history: dict[str, float] | None = None) -> pd.DataFrame:
-        if history:
+        if history is not None:
             R = self.data.row_from_history(history)
-            if R.nnz:
-                idx, sc = top_k(self.model.score(R), R, k)
-                return self._present(idx[0], sc[0], f"{self.model_name} (fold-in from {R.nnz} supplied reviews)")
+            idx, sc = top_k(self.model.score(R), R, k)
+            return self._present(idx[0], sc[0], f"{self.model_name} (fold-in from {R.nnz} supplied reviews)")
         if user_id in self.data.user_idx:
             R = self.data.R[[self.data.user_idx[user_id]]]
             idx, sc = top_k(self.model.score(R), R, k)

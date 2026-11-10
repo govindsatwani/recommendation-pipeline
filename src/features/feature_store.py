@@ -60,8 +60,10 @@ def interaction_features(
     df = pairs[["user_id", "item_id"] + [c for c in ("rating", "timestamp") if c in pairs.columns]].copy()
     df = df.merge(user_feats, on="user_id", how="left").merge(item_feats, on="item_id", how="left")
     out = df[["user_id", "item_id"]].copy()
-    out["interaction_category_match"] = (df["item_category"] == df["user_preferred_category"]).astype(int)
-    out["interaction_brand_match"] = (df["item_brand"] == df["user_preferred_brand"]).astype(int)
+    category_known = (df["item_category"].notna() & df["user_preferred_category"].notna())
+    brand_known = (df["item_brand"].notna() & df["user_preferred_brand"].notna())
+    out["interaction_category_match"] = (df["item_category"].eq(df["user_preferred_category"]).astype("Int64").where(category_known, pd.NA))
+    out["interaction_brand_match"] = (df["item_brand"].eq(df["user_preferred_brand"]).astype("Int64").where(brand_known, pd.NA))
     out["interaction_price_ratio"] = df["item_price"] / df["user_avg_price"].replace(0, np.nan)
     if "rating" in df:
         out["interaction_rating_minus_user_avg"] = df["rating"] - df["user_avg_rating"]
@@ -138,7 +140,7 @@ def write_catalog(cfg: dict, store: FeatureStore) -> Path:
     lines = [
         "# Feature Catalog",
         "",
-        f"All features are computed from **training data only**",
+        "Interaction-derived aggregates use training interactions. Item attributes and price imputation use the cleaned item metadata; historical availability is not established.",
         "",
     ]
     for entity, title in (("user", "User features"), ("item", "Item features"), ("interaction", "Interaction features")):
