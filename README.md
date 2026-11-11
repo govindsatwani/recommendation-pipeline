@@ -24,8 +24,8 @@ The entire pipeline is orchestrated end to end with Prefect.
 | Serving | `src/inference/`, `predict.py` | `reports/sample_recommendations.md` |
 
 Models: **popularity baseline** and **SVD matrix factorisation** (personalised). 
-1. The final report can be found in [reports/final_report.md](reports/final_report.md).
-2. The feature documentation can be found in [reports/feature_catalog.md](reports/feature_catalog.md).
+1. The final report can be found [here](reports/2025AG05056_DM4ML_Recommendation_Pipeline.pdf).
+2. The feature documentation can be found [here](reports/feature_catalog.md).
 
 ## Setup
 
